@@ -51,9 +51,10 @@ Future<bool> unixSingleInstance(List<String> arguments,
     }
     await socketFile.delete();
   }
-  StreamSubscription<Socket> socket;
+  // TODO manage socket subscription, technically not required because OS clean up does the work "for" us but good practices.
+  // StreamSubscription<Socket>? socket;
   try {
-    socket = await createUnixSocket(host, cmdProcessor, kDebugMode: kDebugMode);
+    /*socket = */await createUnixSocket(host, cmdProcessor, kDebugMode: kDebugMode);
   } catch (e) {
     print("Socket create error");
     print(e);
