@@ -44,12 +44,12 @@ Future<bool> unixSingleInstance(List<String> arguments,
         print("Quiting");
       }
       exit(0);
-      return false;
+    } else {
+      if (kDebugMode) {
+        print("Deleting dead socket");
+      }
+      await socketFile.delete();
     }
-    if (kDebugMode) {
-      print("Deleting dead socket");
-    }
-    await socketFile.delete();
   }
   // TODO manage socket subscription, technically not required because OS clean up does the work "for" us but good practices.
   // StreamSubscription<Socket>? socket;
