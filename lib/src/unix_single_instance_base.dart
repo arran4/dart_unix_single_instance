@@ -6,6 +6,9 @@ import 'dart:typed_data';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 
+// Simple function to get the appropriate file location to store using path_provider
+// this should be replaced, especially if we are going to allow the user to specify
+// if it's a single instance per {user, user&x, x, system, etc.}
 Future<String> _applicationConfigDirectory() async {
   final String dbPath;
   if (Platform.isAndroid) {
@@ -20,6 +23,11 @@ Future<String> _applicationConfigDirectory() async {
   return dbPath;
 }
 
+// Call this at the top of your function, returns a bool. Which is "true" if this is the first instance,
+// if this is the second instance (and it has transmitted the arguments across the socket) it returns
+// false.
+// cmdProcessor is what the first instance does once it receives the command line arguments from the previous
+// kDebugMode makes the application noisy.
 Future<bool> unixSingleInstance(List<String> arguments,
     void Function(List<dynamic> args) cmdProcessor, {
       bool kDebugMode = false
@@ -37,7 +45,7 @@ Future<bool> unixSingleInstance(List<String> arguments,
     if (kDebugMode) {
       print("Found existing instance!");
     }
-    var messageSent = await sendArgsToUixSocket(arguments, host, kDebugMode: kDebugMode);
+    var messageSent = await _sendArgsToUixSocket(arguments, host, kDebugMode: kDebugMode);
     if (messageSent) {
       if (kDebugMode) {
         print("Message sent");
@@ -54,7 +62,7 @@ Future<bool> unixSingleInstance(List<String> arguments,
   // TODO manage socket subscription, technically not required because OS clean up does the work "for" us but good practices.
   // StreamSubscription<Socket>? socket;
   try {
-    /*socket = */await createUnixSocket(host, cmdProcessor, kDebugMode: kDebugMode);
+    /*socket = */await _createUnixSocket(host, cmdProcessor, kDebugMode: kDebugMode);
   } catch (e) {
     print("Socket create error");
     print(e);
@@ -64,7 +72,8 @@ Future<bool> unixSingleInstance(List<String> arguments,
   return true;
 }
 
-Future<bool> sendArgsToUixSocket(
+// JSON serializes the args, and sends across "the wire"
+Future<bool> _sendArgsToUixSocket(
     List<String> args, InternetAddress host, {
       bool kDebugMode = false
     }) async {
@@ -82,7 +91,10 @@ Future<bool> sendArgsToUixSocket(
   }
 }
 
-Future<StreamSubscription<Socket>> createUnixSocket(InternetAddress host,
+// Creates the unix socket, or cleans up if it exists but isn't valid and then
+// recursively calls itself -- if the socket is valid, sends the args as json.
+// Return stream subscription.
+Future<StreamSubscription<Socket>> _createUnixSocket(InternetAddress host,
     void Function(List<dynamic> args) cmdProcessor, {
       bool kDebugMode = false
     }) async {

@@ -1,3 +1,7 @@
+## 0.0.3
+
+- General/genuine packaging improvements.
+
 ## 0.0.2
 
 - Flutter packaging requirements
