@@ -6,7 +6,7 @@ import 'dart:typed_data';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 
-Future<String> applicationConfigDirectory() async {
+Future<String> _applicationConfigDirectory() async {
   final String dbPath;
   if (Platform.isAndroid) {
     dbPath = (await getApplicationDocumentsDirectory()).path;
@@ -28,7 +28,7 @@ Future<bool> unixSingleInstance(List<String> arguments,
   // Kept short because of mac os x sandboxing makes the name too long for unix sockets.
   var socketFilename = 'socket';
   // TODO make configurable so it can be per X, per User, or for the whole machine based on optional named args
-  var configPath = await applicationConfigDirectory();
+  var configPath = await _applicationConfigDirectory();
   await Directory(configPath).create(recursive: true);
   var socketFilepath = p.join(configPath, socketFilename);
   final InternetAddress host = InternetAddress(socketFilepath, type: InternetAddressType.unix);
