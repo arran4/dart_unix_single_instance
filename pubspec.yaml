@@ -16,3 +16,8 @@ dependencies:
 
 dev_dependencies:
   lints: ^3.0.0
+
+# This package supports only Linux and macOS.
+platforms:
+  linux:
+  macos:
