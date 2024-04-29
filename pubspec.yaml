@@ -5,7 +5,9 @@ repository: https://github.com/arran4/dart_unix_single_instance
 homepage: https://github.com/arran4/dart_unix_single_instance
 
 environment:
-  sdk: ^3.3.0
+  sdk: '>=3.3.0 <4.0.0'
+  # Because of path_provider -_-
+  flutter: ">=2.5.0"
 
 dependencies:
   args: ^2.4.2
