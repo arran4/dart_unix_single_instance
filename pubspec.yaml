@@ -18,6 +18,4 @@ flutter:
   plugin:
     platforms:
       linux:
-        pluginClass: UnixSingleInstancePlugin
       macos:
-        pluginClass: UnixSingleInstancePlugin
