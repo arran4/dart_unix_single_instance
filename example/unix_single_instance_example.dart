@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:dart_unix_single_instance/unix_single_instance.dart';
+import 'package:unix_single_instance/unix_single_instance.dart';
 
 void cmdProcessor(List<dynamic> decodedArgs) {
   if (decodedArgs.isEmpty) {
