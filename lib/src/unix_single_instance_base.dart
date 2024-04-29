@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 
+// TODO move to a named arg
 const kDebugMode = false;
 
 Future<String> applicationConfigDirectory() async {
