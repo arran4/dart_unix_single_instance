@@ -23,6 +23,17 @@ Future<String> _applicationConfigDirectory() async {
   return dbPath;
 }
 
+enum ErrorMode {
+  // Exits with a -1
+  exit,
+  // Throws an error
+  throwError,
+  // Returns false
+  returnFalse,
+  // Returns true
+  returnTrue;
+}
+
 // Call this at the top of your function, returns a bool. Which is "true" if this is the first instance,
 // if this is the second instance (and it has transmitted the arguments across the socket) it returns
 // false.
@@ -30,7 +41,8 @@ Future<String> _applicationConfigDirectory() async {
 // kDebugMode makes the application noisy.
 Future<bool> unixSingleInstance(List<String> arguments,
     void Function(List<dynamic> args) cmdProcessor, {
-      bool kDebugMode = false
+      bool kDebugMode = false,
+      ErrorMode errorMode = ErrorMode.exit
 }) async {
   // TODO make a named arg
   // Kept short because of mac os x sandboxing makes the name too long for unix sockets.
@@ -66,7 +78,16 @@ Future<bool> unixSingleInstance(List<String> arguments,
   } catch (e) {
     print("Socket create error");
     print(e);
-    exit(0);
+    switch (errorMode) {
+      case ErrorMode.exit:
+        exit(-1);
+      case ErrorMode.throwError:
+        throw Error.safeToString("socket create error: $e");
+      case ErrorMode.returnTrue:
+        return true;
+      case ErrorMode.returnFalse:
+        // Pass through
+    }
     return false;
   }
   return true;
