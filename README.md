@@ -54,7 +54,7 @@ void cmdProcessor(List<dynamic> decodedArgs) {
     if (each is! String) {
       continue;
     }
-    queueUrl(each);
+    doSomethingWithThis(each);
   }
 }
 
