@@ -14,9 +14,3 @@ dependencies:
 
 dev_dependencies:
   lints: ^3.0.0
-
-flutter:
-  plugin:
-    platforms:
-      linux:
-      macos:
