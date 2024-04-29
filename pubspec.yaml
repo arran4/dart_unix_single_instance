@@ -1,6 +1,6 @@
 name: unix_single_instance
 description: A library which uses unix sockets to ensure a single instance
-version: 0.0.1
+version: 0.0.2
 repository: https://github.com/arran4/dart_unix_single_instance
 homepage: https://github.com/arran4/dart_unix_single_instance
 
