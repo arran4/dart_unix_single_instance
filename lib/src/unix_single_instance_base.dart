@@ -39,11 +39,9 @@ enum ErrorMode {
 // false.
 // cmdProcessor is what the first instance does once it receives the command line arguments from the previous
 // kDebugMode makes the application noisy.
-Future<bool> unixSingleInstance(List<String> arguments,
-    void Function(List<dynamic> args) cmdProcessor, {
-      bool kDebugMode = false,
-      ErrorMode errorMode = ErrorMode.exit
-}) async {
+Future<bool> unixSingleInstance(
+    List<String> arguments, void Function(List<dynamic> args) cmdProcessor,
+    {bool kDebugMode = false, ErrorMode errorMode = ErrorMode.exit}) async {
   // TODO make a named arg
   // Kept short because of mac os x sandboxing makes the name too long for unix sockets.
   var socketFilename = 'socket';
@@ -51,13 +49,15 @@ Future<bool> unixSingleInstance(List<String> arguments,
   var configPath = await _applicationConfigDirectory();
   await Directory(configPath).create(recursive: true);
   var socketFilepath = p.join(configPath, socketFilename);
-  final InternetAddress host = InternetAddress(socketFilepath, type: InternetAddressType.unix);
+  final InternetAddress host =
+      InternetAddress(socketFilepath, type: InternetAddressType.unix);
   var socketFile = File(socketFilepath);
   if (await socketFile.exists()) {
     if (kDebugMode) {
       print("Found existing instance!");
     }
-    var messageSent = await _sendArgsToUixSocket(arguments, host, kDebugMode: kDebugMode);
+    var messageSent =
+        await _sendArgsToUixSocket(arguments, host, kDebugMode: kDebugMode);
     if (messageSent) {
       if (kDebugMode) {
         print("Message sent");
@@ -74,7 +74,8 @@ Future<bool> unixSingleInstance(List<String> arguments,
   // TODO manage socket subscription, technically not required because OS clean up does the work "for" us but good practices.
   // StreamSubscription<Socket>? socket;
   try {
-    /*socket = */await _createUnixSocket(host, cmdProcessor, kDebugMode: kDebugMode);
+    /*socket = */ await _createUnixSocket(host, cmdProcessor,
+        kDebugMode: kDebugMode);
   } catch (e) {
     print("Socket create error");
     print(e);
@@ -86,7 +87,7 @@ Future<bool> unixSingleInstance(List<String> arguments,
       case ErrorMode.returnTrue:
         return true;
       case ErrorMode.returnFalse:
-        // Pass through
+      // Pass through
     }
     return false;
   }
@@ -94,10 +95,8 @@ Future<bool> unixSingleInstance(List<String> arguments,
 }
 
 // JSON serializes the args, and sends across "the wire"
-Future<bool> _sendArgsToUixSocket(
-    List<String> args, InternetAddress host, {
-      bool kDebugMode = false
-    }) async {
+Future<bool> _sendArgsToUixSocket(List<String> args, InternetAddress host,
+    {bool kDebugMode = false}) async {
   try {
     var s = await Socket.connect(host, 0);
     s.writeln(jsonEncode(args));
@@ -115,10 +114,9 @@ Future<bool> _sendArgsToUixSocket(
 // Creates the unix socket, or cleans up if it exists but isn't valid and then
 // recursively calls itself -- if the socket is valid, sends the args as json.
 // Return stream subscription.
-Future<StreamSubscription<Socket>> _createUnixSocket(InternetAddress host,
-    void Function(List<dynamic> args) cmdProcessor, {
-      bool kDebugMode = false
-    }) async {
+Future<StreamSubscription<Socket>> _createUnixSocket(
+    InternetAddress host, void Function(List<dynamic> args) cmdProcessor,
+    {bool kDebugMode = false}) async {
   if (kDebugMode) {
     print("creating socket");
   }
