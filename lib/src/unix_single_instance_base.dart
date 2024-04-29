@@ -6,9 +6,6 @@ import 'dart:typed_data';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 
-// TODO move to a named arg
-const kDebugMode = false;
-
 Future<String> applicationConfigDirectory() async {
   final String dbPath;
   if (Platform.isAndroid) {
@@ -24,7 +21,9 @@ Future<String> applicationConfigDirectory() async {
 }
 
 Future<bool> unixSingleInstance(List<String> arguments,
-    void Function(List<dynamic> args) cmdProcessor) async {
+    void Function(List<dynamic> args) cmdProcessor, {
+      bool kDebugMode = false
+}) async {
   // TODO make a named arg
   // Kept short because of mac os x sandboxing makes the name too long for unix sockets.
   var socketFilename = 'socket';
@@ -38,7 +37,7 @@ Future<bool> unixSingleInstance(List<String> arguments,
     if (kDebugMode) {
       print("Found existing instance!");
     }
-    var messageSent = await sendArgsToUixSocket(arguments, host);
+    var messageSent = await sendArgsToUixSocket(arguments, host, kDebugMode: kDebugMode);
     if (messageSent) {
       if (kDebugMode) {
         print("Message sent");
@@ -54,7 +53,7 @@ Future<bool> unixSingleInstance(List<String> arguments,
   }
   StreamSubscription<Socket> socket;
   try {
-    socket = await createUnixSocket(host, cmdProcessor);
+    socket = await createUnixSocket(host, cmdProcessor, kDebugMode: kDebugMode);
   } catch (e) {
     print("Socket create error");
     print(e);
@@ -65,7 +64,9 @@ Future<bool> unixSingleInstance(List<String> arguments,
 }
 
 Future<bool> sendArgsToUixSocket(
-    List<String> args, InternetAddress host) async {
+    List<String> args, InternetAddress host, {
+      bool kDebugMode = false
+    }) async {
   try {
     var s = await Socket.connect(host, 0);
     s.writeln(jsonEncode(args));
@@ -81,7 +82,9 @@ Future<bool> sendArgsToUixSocket(
 }
 
 Future<StreamSubscription<Socket>> createUnixSocket(InternetAddress host,
-    void Function(List<dynamic> args) cmdProcessor) async {
+    void Function(List<dynamic> args) cmdProcessor, {
+      bool kDebugMode = false
+    }) async {
   if (kDebugMode) {
     print("creating socket");
   }
