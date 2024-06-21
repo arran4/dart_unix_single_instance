@@ -5,6 +5,8 @@ Restrict a Linux or Mac OS X app to only be able to open one instance at a time.
 This uses Unix sockets to ensure a single instance. There are other ways of doing this however this was
 the most "portable." For windows support cosnider adding: windows_single_instance
 
+https://pub.dev/packages/unix_single_instance
+
 ## Installing
 
 1. Add the `async` modifier to your apps `main` function.
