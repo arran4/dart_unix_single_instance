@@ -63,7 +63,8 @@ Future<bool> unixSingleInstance(
         print("Message sent");
         print("Quiting");
       }
-      exit(0);
+      return false; // second instance return false
+      // exit(0);
     } else {
       if (kDebugMode) {
         print("Deleting dead socket");
