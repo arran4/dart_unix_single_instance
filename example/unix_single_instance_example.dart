@@ -18,12 +18,10 @@ void main(List<String> arguments) async {
   if (Platform.isLinux) {
     if (!await unixSingleInstance(arguments, cmdProcessor)) {
       exit(0);
-      return;
     }
   } else if (Platform.isMacOS) {
     if (!await unixSingleInstance(arguments, cmdProcessor)) {
       exit(0);
-      return;
     }
   }
 }
