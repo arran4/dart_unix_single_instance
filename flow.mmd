@@ -1,0 +1,34 @@
+sequenceDiagram
+    participant OS as Operating System
+    participant App as Application
+    participant Socket as Unix Socket
+    participant Config as Config Directory
+
+    App->>Config: Get Application Config Directory
+    App->>Config: Create Config Directory (if needed)
+    App->>Socket: Check if socket file exists
+
+    alt Socket File Exists
+        App->>Socket: Connect to existing socket
+        alt Connection Successful
+            App->>Socket: Send arguments as JSON
+            Socket-->>App: Acknowledgement
+            App->>OS: Exit Application
+        else Connection Failed (Dead Socket)
+            App->>Socket: Delete dead socket file
+            App->>Socket: Create new Unix socket
+            App->>App: Listen for incoming connections
+            App->>App: Return True (First instance)
+        end
+    else Socket File Does Not Exist
+        App->>Socket: Create new Unix socket
+        App->>App: Listen for incoming connections
+        App->>App: Return True (First instance)
+    end
+
+    loop Listen for incoming connections
+        Socket->>App: Connection from second instance
+        App->>Socket: Read incoming JSON arguments
+        App->>App: Decode JSON arguments
+        App->>App: Call cmdProcessor with decoded arguments
+    end
