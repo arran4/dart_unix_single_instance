@@ -41,7 +41,10 @@ enum ErrorMode {
 // kDebugMode makes the application noisy.
 Future<bool> unixSingleInstance(
     List<String> arguments, void Function(List<dynamic> args) cmdProcessor,
-    {bool kDebugMode = false, ErrorMode errorMode = ErrorMode.exit, String? customConfigPath, String socketFilename = 'socket'}) async {
+    {bool kDebugMode = false,
+    ErrorMode errorMode = ErrorMode.exit,
+    String? customConfigPath,
+    String socketFilename = 'socket'}) async {
   // Kept short because of mac os x sandboxing makes the name too long for unix sockets.
   // TODO make configurable so it can be per X, per User, or for the whole machine based on optional named args
   var configPath = customConfigPath ?? await _applicationConfigDirectory();

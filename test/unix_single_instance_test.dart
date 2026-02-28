@@ -9,7 +9,8 @@ void main() {
     late Directory tempDir;
 
     setUp(() async {
-      tempDir = await Directory.systemTemp.createTemp('unix_single_instance_test_');
+      tempDir =
+          await Directory.systemTemp.createTemp('unix_single_instance_test_');
     });
 
     tearDown(() async {
@@ -33,7 +34,8 @@ void main() {
       expect(await socketFile.exists(), isTrue);
     });
 
-    test('Second instance returns false and sends args to first instance', () async {
+    test('Second instance returns false and sends args to first instance',
+        () async {
       var receivedArgs = <dynamic>[];
 
       // Start the "first instance"
