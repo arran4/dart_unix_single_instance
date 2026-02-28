@@ -26,6 +26,8 @@ Future<String> _applicationConfigDirectory() async {
 abstract class SocketProvider {
   Future<ServerSocket> bind(InternetAddress address, int port);
   Future<Socket> connect(InternetAddress host, int port);
+  Future<bool> checkSocketExists(String path);
+  Future<void> clearSocket(String path);
 }
 
 class DefaultSocketProvider implements SocketProvider {
@@ -37,6 +39,16 @@ class DefaultSocketProvider implements SocketProvider {
   @override
   Future<Socket> connect(InternetAddress host, int port) {
     return Socket.connect(host, port);
+  }
+
+  @override
+  Future<bool> checkSocketExists(String path) {
+    return File(path).exists();
+  }
+
+  @override
+  Future<void> clearSocket(String path) {
+    return File(path).delete();
   }
 }
 
@@ -72,8 +84,7 @@ Future<bool> unixSingleInstance(
   var socketFilepath = p.join(configPath, socketFilename);
   final InternetAddress host =
       InternetAddress(socketFilepath, type: InternetAddressType.unix);
-  var socketFile = File(socketFilepath);
-  if (await socketFile.exists()) {
+  if (await provider.checkSocketExists(socketFilepath)) {
     if (kDebugMode) {
       print("Found existing instance!");
     }
@@ -97,7 +108,7 @@ Future<bool> unixSingleInstance(
       if (kDebugMode) {
         print("Deleting dead socket");
       }
-      await socketFile.delete();
+      await provider.clearSocket(socketFilepath);
     }
   }
   // TODO manage socket subscription, technically not required because OS clean up does the work "for" us but good practices.

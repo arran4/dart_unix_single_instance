@@ -14,6 +14,16 @@ class MockSocketProvider implements SocketProvider {
   Future<Socket> connect(InternetAddress host, int port) {
     throw UnimplementedError('Mock connect');
   }
+
+  @override
+  Future<bool> checkSocketExists(String path) {
+    return Future.value(false);
+  }
+
+  @override
+  Future<void> clearSocket(String path) {
+    return Future.value();
+  }
 }
 
 void main() {
