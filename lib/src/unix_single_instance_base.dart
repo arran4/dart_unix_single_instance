@@ -44,7 +44,8 @@ Future<bool> unixSingleInstance(
     {bool kDebugMode = false,
     ErrorMode errorMode = ErrorMode.exit,
     String? customConfigPath,
-    String socketFilename = 'socket'}) async {
+    String socketFilename = 'socket',
+    void Function(int)? exitOverride}) async {
   // Kept short because of mac os x sandboxing makes the name too long for unix sockets.
   // TODO make configurable so it can be per X, per User, or for the whole machine based on optional named args
   var configPath = customConfigPath ?? await _applicationConfigDirectory();
@@ -67,6 +68,10 @@ Future<bool> unixSingleInstance(
       if (errorMode == ErrorMode.returnFalse) {
         return false;
       } else {
+        if (exitOverride != null) {
+          exitOverride(0);
+          return false;
+        }
         exit(0);
       }
     } else {
@@ -86,6 +91,10 @@ Future<bool> unixSingleInstance(
     print(e);
     switch (errorMode) {
       case ErrorMode.exit:
+        if (exitOverride != null) {
+          exitOverride(-1);
+          return false;
+        }
         exit(-1);
       case ErrorMode.throwError:
         throw Error.safeToString("socket create error: $e");

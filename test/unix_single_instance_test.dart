@@ -65,5 +65,33 @@ void main() {
 
       expect(receivedArgs, equals(['second1', 'second2']));
     });
+
+    test('Second instance triggers exitOverride when provided', () async {
+      // Start the "first instance"
+      var isFirst = await unixSingleInstance(
+        ['first'],
+        (args) {},
+        customConfigPath: tempDir.path,
+        errorMode: ErrorMode.exit,
+      );
+
+      expect(isFirst, isTrue);
+
+      int? capturedExitCode;
+
+      // Start the "second instance" with exitOverride
+      var isSecondFirst = await unixSingleInstance(
+        ['second1', 'second2'],
+        (args) {},
+        customConfigPath: tempDir.path,
+        errorMode: ErrorMode.exit,
+        exitOverride: (code) {
+          capturedExitCode = code;
+        },
+      );
+
+      expect(isSecondFirst, isFalse);
+      expect(capturedExitCode, equals(0));
+    });
   });
 }
