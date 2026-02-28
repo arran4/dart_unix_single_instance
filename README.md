@@ -14,6 +14,10 @@ https://pub.dev/packages/unix_single_instance
 1. Add a call to `unixSingleInstance()` inside the appropriate conditions. Placement in the main function
 to taste.
 
+## Program Flow
+
+![Program Flow](assets/flow.svg)
+
 ## Notes
 
 If using flutter, recommend using this with the: `window_manager` plugin
