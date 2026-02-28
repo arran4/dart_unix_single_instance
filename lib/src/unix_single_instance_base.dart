@@ -60,7 +60,7 @@ enum ErrorMode {
   // Returns false
   returnFalse,
   // Returns true
-  returnTrue;
+  returnTrue,
 }
 
 // Call this at the top of your function, returns a bool. Which is "true" if this is the first instance,
