@@ -123,5 +123,24 @@ void main() {
         expect(e.toString(), contains('Mock bind'));
       }
     });
+
+    test('Dead socket is deleted and first instance starts', () async {
+      // Simulate a dead socket file from a previously crashed instance
+      var socketFile = File(p.join(tempDir.path, 'socket'));
+      await socketFile.create();
+
+      var isFirst = await unixSingleInstance(
+        ['arg1', 'arg2'],
+        (args) {},
+        customConfigPath: tempDir.path,
+        errorMode: ErrorMode.returnFalse,
+      );
+
+      // The dead socket should be deleted and it should successfully bind
+      expect(isFirst, isTrue);
+
+      // Verify a real, bound socket file now exists
+      expect(await socketFile.exists(), isTrue);
+    });
   });
 }
