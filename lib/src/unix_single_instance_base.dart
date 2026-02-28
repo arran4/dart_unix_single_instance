@@ -88,8 +88,8 @@ Future<bool> unixSingleInstance(
     if (kDebugMode) {
       print("Found existing instance!");
     }
-    var messageSent =
-        await _sendArgsToUixSocket(arguments, host, provider, kDebugMode: kDebugMode);
+    var messageSent = await _sendArgsToUixSocket(arguments, host, provider,
+        kDebugMode: kDebugMode);
     if (messageSent) {
       if (kDebugMode) {
         print("Message sent");
@@ -139,7 +139,8 @@ Future<bool> unixSingleInstance(
 }
 
 // JSON serializes the args, and sends across "the wire"
-Future<bool> _sendArgsToUixSocket(List<String> args, InternetAddress host, SocketProvider provider,
+Future<bool> _sendArgsToUixSocket(
+    List<String> args, InternetAddress host, SocketProvider provider,
     {bool kDebugMode = false}) async {
   try {
     var s = await provider.connect(host, 0);
@@ -158,8 +159,8 @@ Future<bool> _sendArgsToUixSocket(List<String> args, InternetAddress host, Socke
 // Creates the unix socket, or cleans up if it exists but isn't valid and then
 // recursively calls itself -- if the socket is valid, sends the args as json.
 // Return stream subscription.
-Future<StreamSubscription<Socket>> _createUnixSocket(
-    InternetAddress host, void Function(List<dynamic> args) cmdProcessor, SocketProvider provider,
+Future<StreamSubscription<Socket>> _createUnixSocket(InternetAddress host,
+    void Function(List<dynamic> args) cmdProcessor, SocketProvider provider,
     {bool kDebugMode = false}) async {
   if (kDebugMode) {
     print("creating socket");
