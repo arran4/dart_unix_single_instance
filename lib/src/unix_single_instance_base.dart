@@ -23,6 +23,23 @@ Future<String> _applicationConfigDirectory() async {
   return dbPath;
 }
 
+abstract class SocketProvider {
+  Future<ServerSocket> bind(InternetAddress address, int port);
+  Future<Socket> connect(InternetAddress host, int port);
+}
+
+class DefaultSocketProvider implements SocketProvider {
+  @override
+  Future<ServerSocket> bind(InternetAddress address, int port) {
+    return ServerSocket.bind(address, port);
+  }
+
+  @override
+  Future<Socket> connect(InternetAddress host, int port) {
+    return Socket.connect(host, port);
+  }
+}
+
 enum ErrorMode {
   // Exits with a -1
   exit,
@@ -45,7 +62,9 @@ Future<bool> unixSingleInstance(
     ErrorMode errorMode = ErrorMode.exit,
     String? customConfigPath,
     String socketFilename = 'socket',
-    void Function(int)? exitOverride}) async {
+    void Function(int)? exitOverride,
+    SocketProvider? socketProvider}) async {
+  final provider = socketProvider ?? DefaultSocketProvider();
   // Kept short because of mac os x sandboxing makes the name too long for unix sockets.
   // TODO make configurable so it can be per X, per User, or for the whole machine based on optional named args
   var configPath = customConfigPath ?? await _applicationConfigDirectory();
@@ -59,7 +78,7 @@ Future<bool> unixSingleInstance(
       print("Found existing instance!");
     }
     var messageSent =
-        await _sendArgsToUixSocket(arguments, host, kDebugMode: kDebugMode);
+        await _sendArgsToUixSocket(arguments, host, provider, kDebugMode: kDebugMode);
     if (messageSent) {
       if (kDebugMode) {
         print("Message sent");
@@ -84,7 +103,7 @@ Future<bool> unixSingleInstance(
   // TODO manage socket subscription, technically not required because OS clean up does the work "for" us but good practices.
   // StreamSubscription<Socket>? socket;
   try {
-    /*socket = */ await _createUnixSocket(host, cmdProcessor,
+    /*socket = */ await _createUnixSocket(host, cmdProcessor, provider,
         kDebugMode: kDebugMode);
   } catch (e) {
     print("Socket create error");
@@ -109,10 +128,10 @@ Future<bool> unixSingleInstance(
 }
 
 // JSON serializes the args, and sends across "the wire"
-Future<bool> _sendArgsToUixSocket(List<String> args, InternetAddress host,
+Future<bool> _sendArgsToUixSocket(List<String> args, InternetAddress host, SocketProvider provider,
     {bool kDebugMode = false}) async {
   try {
-    var s = await Socket.connect(host, 0);
+    var s = await provider.connect(host, 0);
     s.writeln(jsonEncode(args));
     await s.close();
     return true;
@@ -129,12 +148,12 @@ Future<bool> _sendArgsToUixSocket(List<String> args, InternetAddress host,
 // recursively calls itself -- if the socket is valid, sends the args as json.
 // Return stream subscription.
 Future<StreamSubscription<Socket>> _createUnixSocket(
-    InternetAddress host, void Function(List<dynamic> args) cmdProcessor,
+    InternetAddress host, void Function(List<dynamic> args) cmdProcessor, SocketProvider provider,
     {bool kDebugMode = false}) async {
   if (kDebugMode) {
     print("creating socket");
   }
-  ServerSocket serverSocket = await ServerSocket.bind(host, 0);
+  ServerSocket serverSocket = await provider.bind(host, 0);
   if (kDebugMode) {
     print("creating listening");
   }
