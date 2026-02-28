@@ -41,12 +41,10 @@ enum ErrorMode {
 // kDebugMode makes the application noisy.
 Future<bool> unixSingleInstance(
     List<String> arguments, void Function(List<dynamic> args) cmdProcessor,
-    {bool kDebugMode = false, ErrorMode errorMode = ErrorMode.exit}) async {
-  // TODO make a named arg
+    {bool kDebugMode = false, ErrorMode errorMode = ErrorMode.exit, String? customConfigPath, String socketFilename = 'socket'}) async {
   // Kept short because of mac os x sandboxing makes the name too long for unix sockets.
-  var socketFilename = 'socket';
   // TODO make configurable so it can be per X, per User, or for the whole machine based on optional named args
-  var configPath = await _applicationConfigDirectory();
+  var configPath = customConfigPath ?? await _applicationConfigDirectory();
   await Directory(configPath).create(recursive: true);
   var socketFilepath = p.join(configPath, socketFilename);
   final InternetAddress host =
@@ -63,7 +61,11 @@ Future<bool> unixSingleInstance(
         print("Message sent");
         print("Quiting");
       }
-      exit(0);
+      if (errorMode == ErrorMode.returnFalse) {
+        return false;
+      } else {
+        exit(0);
+      }
     } else {
       if (kDebugMode) {
         print("Deleting dead socket");
