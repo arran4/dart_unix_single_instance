@@ -1,9 +1,33 @@
 flowchart TD
-    Start([User launches App]) --> CheckExisting{Is another instance running?}
+    Start([User launches App]) --> GetConfig[Get Application Config Directory]
+    GetConfig --> EnsureDir[Create Directory if needed]
+    EnsureDir --> CheckSocket{Does socket file exist?}
 
-    CheckExisting -- Yes --> SendArgs[Send command line arguments to existing instance]
-    SendArgs --> Exit([Exit current App])
+    CheckSocket -- Yes --> TryConnect[Connect to Unix socket]
+    TryConnect --> ConnectSuccess{Connection successful?}
 
-    CheckExisting -- No --> StartListen[Listen for arguments from future instances]
-    StartListen --> RunApp[Run normal App interface]
-    RunApp --> Stop([App closed by User])
+    ConnectSuccess -- Yes --> SendArgs[JSON encode args & write to socket]
+    SendArgs --> Exit0([Exit App code 0])
+
+    ConnectSuccess -- No (Dead Socket) --> DeleteDead[Delete dead socket file]
+    DeleteDead --> CreateSocket[Create new Unix ServerSocket]
+
+    CheckSocket -- No --> CreateSocket
+
+    CreateSocket --> SocketSuccess{Socket created successfully?}
+
+    SocketSuccess -- No --> ErrorMode{Check errorMode flag}
+    ErrorMode -- exit --> ExitMinus1([Exit App code -1])
+    ErrorMode -- throwError --> ThrowEx([Throw Exception])
+    ErrorMode -- returnFalse --> RetFalse([Return False to main])
+    ErrorMode -- returnTrue --> RetTrue([Return True to main])
+
+    SocketSuccess -- Yes --> Listen[Listen for incoming connections]
+    Listen --> RetTrue
+
+    %% Second instance connections coming into the listening socket
+    Listen -- On Connection Event --> ReadStream[Read byte stream]
+    ReadStream --> UTF8[UTF-8 decode stream]
+    UTF8 --> JSONDecode[JSON decode arguments string]
+    JSONDecode --> CmdProcessor[Pass decoded list to cmdProcessor]
+    CmdProcessor --> ProcessDone([Handle Args in App])
