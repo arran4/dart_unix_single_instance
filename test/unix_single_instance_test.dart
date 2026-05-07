@@ -6,7 +6,7 @@ import 'package:path/path.dart' as p;
 
 class MockSocketProvider implements SocketProvider {
   @override
-  Future<ServerSocket> bind(InternetAddress address, int port) {
+  Future<Stream<Socket>> bind(InternetAddress address, int port) {
     throw UnimplementedError('Mock bind');
   }
 
@@ -151,6 +151,40 @@ void main() {
 
       // Verify a real, bound socket file now exists
       expect(await socketFile.exists(), isTrue);
+    });
+
+    test('Second instance with AF_ALG AES encryption', () async {
+      var receivedArgs = <dynamic>[];
+      var key = List<int>.generate(32, (i) => i); // 256-bit dummy key
+
+      // Start the "first instance"
+      var isFirst = await unixSingleInstance(
+        ['first'],
+        (args) {
+          receivedArgs.addAll(args);
+        },
+        customConfigPath: tempDir.path,
+        errorMode: ErrorMode.returnFalse,
+        encryptionKey: key,
+      );
+
+      expect(isFirst, isTrue);
+
+      // Start the "second instance"
+      var isSecondFirst = await unixSingleInstance(
+        ['second_enc1', 'second_enc2'],
+        (args) {},
+        customConfigPath: tempDir.path,
+        errorMode: ErrorMode.returnFalse,
+        encryptionKey: key,
+      );
+
+      expect(isSecondFirst, isFalse);
+
+      // Give it a moment for the socket to process
+      await Future.delayed(Duration(milliseconds: 100));
+
+      expect(receivedArgs, equals(['second_enc1', 'second_enc2']));
     });
   });
 }

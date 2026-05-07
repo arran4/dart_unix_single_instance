@@ -5,6 +5,7 @@ import 'dart:typed_data';
 // TODO remove path_provider as it introduces a flutter dependency
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
+import 'af_alg.dart';
 
 // Simple function to get the appropriate file location to store using path_provider
 // this should be replaced, especially if we are going to allow the user to specify
@@ -24,7 +25,7 @@ Future<String> _applicationConfigDirectory() async {
 }
 
 abstract class SocketProvider {
-  Future<ServerSocket> bind(InternetAddress address, int port);
+  Future<Stream<Socket>> bind(InternetAddress address, int port);
   Future<Socket> connect(InternetAddress host, int port);
   Future<bool> checkSocketExists(String path);
   Future<void> clearSocket(String path);
@@ -39,6 +40,31 @@ class DefaultSocketProvider implements SocketProvider {
   @override
   Future<Socket> connect(InternetAddress host, int port) {
     return Socket.connect(host, port);
+  }
+
+  @override
+  Future<bool> checkSocketExists(String path) {
+    return File(path).exists();
+  }
+
+  @override
+  Future<void> clearSocket(String path) {
+    return File(path).delete();
+  }
+}
+
+class SecureSocketProvider implements SocketProvider {
+  final SecurityContext? context;
+  SecureSocketProvider(this.context);
+
+  @override
+  Future<Stream<Socket>> bind(InternetAddress address, int port) {
+    return SecureServerSocket.bind(address, port, context);
+  }
+
+  @override
+  Future<Socket> connect(InternetAddress host, int port) {
+    return SecureSocket.connect(host, port, context: context);
   }
 
   @override
@@ -77,6 +103,7 @@ Future<bool> unixSingleInstance(
   String socketFilename = 'socket',
   void Function(int)? exitOverride,
   SocketProvider? socketProvider,
+  List<int>? encryptionKey,
 }) async {
   final provider = socketProvider ?? DefaultSocketProvider();
   // Kept short because of mac os x sandboxing makes the name too long for unix sockets.
@@ -96,6 +123,7 @@ Future<bool> unixSingleInstance(
       arguments,
       host,
       provider,
+      encryptionKey: encryptionKey,
       kDebugMode: kDebugMode,
     );
     if (messageSent) {
@@ -127,6 +155,7 @@ Future<bool> unixSingleInstance(
       host,
       cmdProcessor,
       provider,
+      encryptionKey: encryptionKey,
       kDebugMode: kDebugMode,
     );
   } catch (e) {
@@ -156,11 +185,19 @@ Future<bool> _sendArgsToUixSocket(
   List<String> args,
   InternetAddress host,
   SocketProvider provider, {
+  List<int>? encryptionKey,
   bool kDebugMode = false,
 }) async {
   try {
     var s = await provider.connect(host, 0);
-    s.writeln(jsonEncode(args));
+    var payload = jsonEncode(args);
+    if (encryptionKey != null) {
+      final encryptor = AfAlgEncryptor(encryptionKey);
+      final encryptedBytes = encryptor.process(utf8.encode(payload), true);
+      s.writeln(base64Encode(encryptedBytes));
+    } else {
+      s.writeln(payload);
+    }
     await s.close();
     return true;
   } catch (e) {
@@ -179,12 +216,13 @@ Future<StreamSubscription<Socket>> _createUnixSocket(
   InternetAddress host,
   void Function(List<dynamic> args) cmdProcessor,
   SocketProvider provider, {
+  List<int>? encryptionKey,
   bool kDebugMode = false,
 }) async {
   if (kDebugMode) {
     print("creating socket");
   }
-  ServerSocket serverSocket = await provider.bind(host, 0);
+  var serverSocket = await provider.bind(host, 0);
   if (kDebugMode) {
     print("creating listening");
   }
@@ -202,7 +240,20 @@ Future<StreamSubscription<Socket>> _createUnixSocket(
       print("Second instance launched with: ${args.toString()}");
     }
     try {
-      List<dynamic> decodedArgs = jsonDecode(args.toString());
+      var payloadString = args.toString().trim();
+      if (encryptionKey != null) {
+        try {
+          var decodedBytes = base64Decode(payloadString);
+          final encryptor = AfAlgEncryptor(encryptionKey);
+          var decryptedBytes = encryptor.process(decodedBytes, false);
+          payloadString = utf8.decode(decryptedBytes);
+        } catch (e) {
+          if (kDebugMode) print("AF_ALG decryption failed: $e");
+          // If decoding fails (e.g. data is corrupt or not encrypted properly), throw
+          rethrow;
+        }
+      }
+      List<dynamic> decodedArgs = jsonDecode(payloadString);
       cmdProcessor(decodedArgs);
     } catch (e) {
       print(e);
